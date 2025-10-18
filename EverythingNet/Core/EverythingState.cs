@@ -15,6 +15,8 @@
       Service
     }
 
+    public static Process? Process { get; private set; }
+
     public static bool IsStarted()
     {
       Version version = GetVersion();
@@ -81,7 +83,7 @@
         throw new Exception("Everything.exe not found");
       }
 
-      Process.Start(exePath, options);
+      Process = Process.Start(exePath, options);
     }
   }
 }

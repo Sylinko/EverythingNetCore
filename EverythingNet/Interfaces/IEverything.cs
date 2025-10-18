@@ -50,15 +50,10 @@
 
     SortingKey SortKey { get; set; }
 
-    IQuery Search();
-
-    void Reset();
-  }
-
-  internal interface IEverythingInternal : IEverything
-  {
     long Count { get; }
 
     IEnumerable<ISearchResult> SendSearch(string searchPattern, RequestFlags flags);
+
+    void Reset();
   }
 }
