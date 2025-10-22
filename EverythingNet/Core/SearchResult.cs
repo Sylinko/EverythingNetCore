@@ -1,141 +1,123 @@
-namespace EverythingNet.Core
+using System.Diagnostics.CodeAnalysis;
+
+namespace EverythingNet.Core;
+
+using System;
+using System.IO;
+using System.Text;
+using Interfaces;
+
+internal class SearchResult(int index, uint replyId) : ISearchResult
 {
-  using System;
-  using System.IO;
-  using System.Text;
-
-  using EverythingNet.Interfaces;
-
-  internal class SearchResult : ISearchResult
-  {
     private delegate bool MyDelegate(uint index, out long date);
 
-    private readonly uint replyId;
-    private readonly uint index;
+    private readonly uint index = Convert.ToUInt32(index);
 
-    private string? fullPath;
+    public long Index => index;
 
-    public SearchResult(int index, uint replyId)
-    {
-      this.replyId = replyId;
-      this.index = Convert.ToUInt32(index);
-    }
+    public bool IsFile => EverythingWrapper.Everything_IsFileResult(index);
 
-    public long Index => this.index;
-
-    public bool IsFile => EverythingWrapper.Everything_IsFileResult(this.index);
-
+    [field: AllowNull, MaybeNull]
     public string FullPath
     {
-      get
-      {
-        if (this.fullPath == null)
+        get
         {
-          var builder = new StringBuilder(260);
+            if (field == null)
+            {
+                var builder = new StringBuilder(260);
 
-          EverythingWrapper.Everything_SetReplyID(this.replyId);
-          EverythingWrapper.Everything_GetResultFullPathName(this.index, builder, 260);
+                EverythingWrapper.Everything_SetReplyID(replyId);
+                EverythingWrapper.Everything_GetResultFullPathName(index, builder, 260);
 
-          this.fullPath = builder.ToString();
+                field = builder.ToString();
+            }
+
+            return field;
         }
-
-        return this.fullPath;
-      }
     }
 
     public string Path
     {
-      get
-      {
-        //EverythingWrapper.Everything_SetReplyID(this.replyId);
-        //return EverythingWrapper.Everything_GetResultPath(this.index);
-
-        // Temporary implementation until the native function works as expected
-        try
+        get
         {
-          return !string.IsNullOrEmpty(this.FullPath)
-            ? System.IO.Path.GetDirectoryName(this.FullPath)!
-            : string.Empty;
-        }
-        catch (Exception e)
-        {
-          this.LastException = e;
+            //EverythingWrapper.Everything_SetReplyID(replyId);
+            //return EverythingWrapper.Everything_GetResultPath(index);
 
-          return this.FullPath;
+            // Temporary implementation until the native function works as expected
+            try
+            {
+                return !string.IsNullOrEmpty(FullPath) ? System.IO.Path.GetDirectoryName(FullPath)! : string.Empty;
+            }
+            catch (Exception e)
+            {
+                LastException = e;
+                return FullPath;
+            }
         }
-      }
     }
 
     public string FileName
     {
-      get
-      {
-        //EverythingWrapper.Everything_SetReplyID(this.replyId);
-        //return EverythingWrapper.Everything_GetResultFileName(this.index);
-
-        // Temporary implementation until the native function works as expected
-        try
+        get
         {
-          return !string.IsNullOrEmpty(this.FullPath)
-            ? System.IO.Path.GetFileName(this.FullPath)
-            : string.Empty;
-        }
-        catch (Exception e)
-        {
-          this.LastException = e;
+            //EverythingWrapper.Everything_SetReplyID(replyId);
+            //return EverythingWrapper.Everything_GetResultFileName(index);
 
-          return this.FullPath;
+            // Temporary implementation until the native function works as expected
+            try
+            {
+                return !string.IsNullOrEmpty(FullPath) ? System.IO.Path.GetFileName(FullPath) : string.Empty;
+            }
+            catch (Exception e)
+            {
+                LastException = e;
+                return FullPath;
+            }
         }
-      }
     }
 
     public long Size
     {
-      get
-      {
-        EverythingWrapper.Everything_SetReplyID(this.replyId);
-        EverythingWrapper.Everything_GetResultSize(this.index, out var size);
+        get
+        {
+            EverythingWrapper.Everything_SetReplyID(replyId);
+            EverythingWrapper.Everything_GetResultSize(index, out var size);
 
-        return size;
-      }
+            return size;
+        }
     }
 
     public uint Attributes
     {
-      get
-      {
-        EverythingWrapper.Everything_SetReplyID(this.replyId);
-        uint attributes = EverythingWrapper.Everything_GetResultAttributes(this.index);
+        get
+        {
+            EverythingWrapper.Everything_SetReplyID(replyId);
+            var attributes = EverythingWrapper.Everything_GetResultAttributes(index);
 
-        return attributes > 0
-          ? attributes
-          : (!string.IsNullOrEmpty(this.FullPath)
-            ? (uint)File.GetAttributes(this.FullPath)
-            : 0);
-      }
+            return attributes > 0 ? attributes
+                : !string.IsNullOrEmpty(FullPath) ? (uint)File.GetAttributes(FullPath)
+                : 0;
+        }
     }
 
-    public DateTime Created => this.GenericDate(EverythingWrapper.Everything_GetResultDateCreated, File.GetCreationTime);
+    public DateTime Created => GenericDate(EverythingWrapper.Everything_GetResultDateCreated, File.GetCreationTime);
 
-    public DateTime Modified => this.GenericDate(EverythingWrapper.Everything_GetResultDateModified, File.GetLastWriteTime);
+    public DateTime Modified => GenericDate(EverythingWrapper.Everything_GetResultDateModified, File.GetLastWriteTime);
 
-    public DateTime Accessed => this.GenericDate(EverythingWrapper.Everything_GetResultDateAccessed, File.GetLastAccessTime);
+    public DateTime Accessed => GenericDate(EverythingWrapper.Everything_GetResultDateAccessed, File.GetLastAccessTime);
 
-    public DateTime Executed => this.GenericDate(EverythingWrapper.Everything_GetResultDateRun, File.GetLastAccessTime);
+    public DateTime Executed => GenericDate(EverythingWrapper.Everything_GetResultDateRun, File.GetLastAccessTime);
 
     public Exception? LastException { get; private set; }
 
     private DateTime GenericDate(MyDelegate func, Func<string, DateTime> fallbackDelegate)
     {
-      EverythingWrapper.Everything_SetReplyID(this.replyId);
-      if (func(this.index, out var date) && date >= 0)
-      {
-        return DateTime.FromFileTime(date);
-      }
+        EverythingWrapper.Everything_SetReplyID(replyId);
+        if (func(index, out var date) && date >= 0)
+        {
+            return DateTime.FromFileTime(date);
+        }
 
-      return !string.IsNullOrEmpty(this.FullPath)
-        ? fallbackDelegate(this.FullPath)
-        : DateTime.MinValue;
+        return !string.IsNullOrEmpty(FullPath) ? fallbackDelegate(FullPath) : DateTime.MinValue;
     }
-  }
 }

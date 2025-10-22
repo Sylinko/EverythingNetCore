@@ -1,12 +1,11 @@
-﻿namespace EverythingNet.Interfaces
+﻿// ReSharper disable InconsistentNaming
+namespace EverythingNet.Interfaces;
+
+using System;
+using System.Collections.Generic;
+
+public enum ErrorCode
 {
-  using System;
-  using System.Collections.Generic;
-
-  using EverythingNet.Core;
-
-  public enum ErrorCode
-  {
     Ok = 0,
     Memory,
     Ipc,
@@ -15,11 +14,11 @@
     CreateThread,
     InvalidIndex,
     Invalidcall
-  }
+}
 
-  [Flags]
-  public enum RequestFlags
-  {
+[Flags]
+public enum RequestFlags
+{
     EVERYTHING_REQUEST_FILE_NAME = 0x00000001,
     EVERYTHING_REQUEST_PATH = 0x00000002,
     EVERYTHING_REQUEST_FULL_PATH_AND_FILE_NAME = 0x00000004,
@@ -36,10 +35,10 @@
     EVERYTHING_REQUEST_HIGHLIGHTED_FILE_NAME = 0x00002000,
     EVERYTHING_REQUEST_HIGHLIGHTED_PATH = 0x00004000,
     EVERYTHING_REQUEST_HIGHLIGHTED_FULL_PATH_AND_FILE_NAME = 0x00008000
-  }
+}
 
-  public interface IEverything
-  {
+public interface IEverything
+{
     ResultKind ResultKind { get; set; }
 
     bool MatchCase { get; set; }
@@ -55,5 +54,4 @@
     IEnumerable<ISearchResult> SendSearch(string searchPattern, RequestFlags flags);
 
     void Reset();
-  }
 }

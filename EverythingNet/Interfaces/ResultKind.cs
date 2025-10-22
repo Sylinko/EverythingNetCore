@@ -1,9 +1,8 @@
-﻿namespace EverythingNet.Interfaces
+﻿namespace EverythingNet.Interfaces;
+
+public enum ResultKind
 {
-  public enum ResultKind
-  {
     Both,
     FilesOnly,
     FoldersOnly
-  }
 }

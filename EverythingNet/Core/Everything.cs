@@ -1,4 +1,6 @@
-﻿namespace EverythingNet.Core;
+﻿using static EverythingNet.Core.EverythingWrapper;
+
+namespace EverythingNet.Core;
 
 using System;
 using System.Collections.Generic;
@@ -6,104 +8,94 @@ using System.Linq;
 using System.Threading;
 using Interfaces;
 
-public class Everything : IEverything, IDisposable
+public sealed class Everything : IEverything, IDisposable
 {
-  private static int lastReplyId;
+    private static int lastReplyId;
 
-  private const uint DefaultSearchFlags = (uint)(
-    RequestFlags.EVERYTHING_REQUEST_SIZE
-    | RequestFlags.EVERYTHING_REQUEST_FILE_NAME
-    | RequestFlags.EVERYTHING_REQUEST_EXTENSION
-    | RequestFlags.EVERYTHING_REQUEST_PATH
-    | RequestFlags.EVERYTHING_REQUEST_FULL_PATH_AND_FILE_NAME
-    | RequestFlags.EVERYTHING_REQUEST_DATE_MODIFIED);
+    private const uint DefaultSearchFlags = (uint)(
+        RequestFlags.EVERYTHING_REQUEST_SIZE
+        | RequestFlags.EVERYTHING_REQUEST_FILE_NAME
+        | RequestFlags.EVERYTHING_REQUEST_EXTENSION
+        | RequestFlags.EVERYTHING_REQUEST_PATH
+        | RequestFlags.EVERYTHING_REQUEST_FULL_PATH_AND_FILE_NAME
+        | RequestFlags.EVERYTHING_REQUEST_DATE_MODIFIED);
 
-  private readonly uint replyId;
+    private readonly uint replyId;
 
-  public Everything()
-  {
-    this.ResultKind = ResultKind.Both;
-    Interlocked.Increment(ref lastReplyId);
-    this.replyId = Convert.ToUInt32(lastReplyId);
-    if (!EverythingState.IsStarted())
+    public Everything()
     {
-      throw new InvalidOperationException("Everything service must be started");
+        ResultKind = ResultKind.Both;
+        Interlocked.Increment(ref lastReplyId);
+        replyId = Convert.ToUInt32(lastReplyId);
+        if (!EverythingState.IsStarted())
+        {
+            throw new InvalidOperationException("Everything service must be started");
+        }
     }
-  }
 
-  public ResultKind ResultKind { get; set; }
+    public ResultKind ResultKind { get; set; }
 
-  public bool MatchCase { get; set; }
+    public bool MatchCase { get; set; }
 
-  public bool MatchPath { get; set; }
+    public bool MatchPath { get; set; }
 
-  public bool MatchWholeWord { get; set; }
+    public bool MatchWholeWord { get; set; }
 
-  public SortingKey SortKey { get; set; }
+    public SortingKey SortKey { get; set; }
 
-  public ErrorCode LastErrorCode { get; set; }
+    public ErrorCode LastErrorCode { get; set; }
 
-  public long Count => EverythingWrapper.Everything_GetNumResults();
+    public long Count => Everything_GetNumResults();
 
-  public void Reset()
-  {
-    EverythingWrapper.Everything_Reset();
-  }
-
-  public void Dispose()
-  {
-    Reset();
-  }
-
-  public IEnumerable<ISearchResult> SendSearch(string searchPattern, RequestFlags flags)
-  {
-    using (EverythingWrapper.Lock())
+    public void Reset()
     {
-      EverythingWrapper.Everything_SetReplyID(this.replyId);
-      EverythingWrapper.Everything_SetMatchWholeWord(this.MatchWholeWord);
-      EverythingWrapper.Everything_SetMatchPath(this.MatchPath);
-      EverythingWrapper.Everything_SetMatchCase(this.MatchCase);
-      EverythingWrapper.Everything_SetRequestFlags((uint)flags|DefaultSearchFlags);
-      searchPattern = this.ApplySearchResultKind(searchPattern);
-      EverythingWrapper.Everything_SetSearch(searchPattern);
-
-      if (this.SortKey != SortingKey.None)
-      {
-        EverythingWrapper.Everything_SetSort((uint)this.SortKey);
-      }
-
-      EverythingWrapper.Everything_Query(true);
-
-      this.LastErrorCode = this.GetError();
-
-      return this.GetResults();
+        Everything_Reset();
     }
-  }
 
-  private string ApplySearchResultKind(string searchPatten)
-  {
-    switch (this.ResultKind)
+    public void Dispose()
     {
-      case ResultKind.FilesOnly:
-        return $"files: {searchPatten}";
-      case ResultKind.FoldersOnly:
-        return $"folders: {searchPatten}";
-      default:
-        return searchPatten;
+        Reset();
     }
-  }
 
-  private IEnumerable<ISearchResult> GetResults()
-  {
-    var numResults = EverythingWrapper.Everything_GetNumResults();
+    public IEnumerable<ISearchResult> SendSearch(string searchPattern, RequestFlags flags)
+    {
+        using (Lock())
+        {
+            Everything_SetReplyID(replyId);
+            Everything_SetMatchWholeWord(MatchWholeWord);
+            Everything_SetMatchPath(MatchPath);
+            Everything_SetMatchCase(MatchCase);
+            Everything_SetRequestFlags((uint)flags | DefaultSearchFlags);
+            searchPattern = ApplySearchResultKind(searchPattern);
+            Everything_SetSearch(searchPattern);
 
-    return Enumerable.Range(0, (int)numResults).Select(x => new SearchResult(x, this.replyId));
-  }
+            if (SortKey != SortingKey.None)
+            {
+                Everything_SetSort((uint)SortKey);
+            }
 
-  private ErrorCode GetError()
-  {
-    var error = EverythingWrapper.Everything_GetLastError();
+            Everything_Query(true);
+            LastErrorCode = GetError();
+            return GetResults();
+        }
+    }
 
-    return (ErrorCode)error;
-  }
+    private string ApplySearchResultKind(string searchPatten) => ResultKind switch
+    {
+        ResultKind.FilesOnly => $"files: {searchPatten}",
+        ResultKind.FoldersOnly => $"folders: {searchPatten}",
+        _ => searchPatten
+    };
+
+    private IEnumerable<ISearchResult> GetResults()
+    {
+        var numResults = Everything_GetNumResults();
+        return Enumerable.Range(0, (int)numResults).Select(x => new SearchResult(x, replyId));
+    }
+
+    private static ErrorCode GetError()
+    {
+        var error = Everything_GetLastError();
+        return (ErrorCode)error;
+    }
 }
