@@ -10,7 +10,9 @@ using Interfaces;
 
 public sealed class Everything : IEverything, IDisposable
 {
-    private static int lastReplyId;
+    private static uint lastReplyId;
+
+    private readonly uint replyId;
 
     private const uint DefaultSearchFlags = (uint)(
         RequestFlags.EVERYTHING_REQUEST_SIZE
@@ -20,13 +22,10 @@ public sealed class Everything : IEverything, IDisposable
         | RequestFlags.EVERYTHING_REQUEST_FULL_PATH_AND_FILE_NAME
         | RequestFlags.EVERYTHING_REQUEST_DATE_MODIFIED);
 
-    private readonly uint replyId;
-
     public Everything()
     {
         ResultKind = ResultKind.Both;
-        Interlocked.Increment(ref lastReplyId);
-        replyId = Convert.ToUInt32(lastReplyId);
+        replyId = Interlocked.Increment(ref lastReplyId);
         if (!EverythingState.IsStarted())
         {
             throw new InvalidOperationException("Everything service must be started");
@@ -59,6 +58,13 @@ public sealed class Everything : IEverything, IDisposable
 
     public IEnumerable<ISearchResult> SendSearch(string searchPattern, RequestFlags flags)
     {
+        ArgumentNullException.ThrowIfNull(searchPattern);
+        
+        if (string.IsNullOrWhiteSpace(searchPattern))
+        {
+            return [];
+        }
+
         using (Lock())
         {
             Everything_SetReplyID(replyId);
@@ -80,11 +86,11 @@ public sealed class Everything : IEverything, IDisposable
         }
     }
 
-    private string ApplySearchResultKind(string searchPatten) => ResultKind switch
+    private string ApplySearchResultKind(string searchPattern) => ResultKind switch
     {
-        ResultKind.FilesOnly => $"files: {searchPatten}",
-        ResultKind.FoldersOnly => $"folders: {searchPatten}",
-        _ => searchPatten
+        ResultKind.FilesOnly => $"files: {searchPattern}",
+        ResultKind.FoldersOnly => $"folders: {searchPattern}",
+        _ => searchPattern
     };
 
     private IEnumerable<ISearchResult> GetResults()
