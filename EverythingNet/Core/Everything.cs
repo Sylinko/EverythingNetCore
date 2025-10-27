@@ -10,9 +10,9 @@ using Interfaces;
 
 public sealed class Everything : IEverything, IDisposable
 {
-    private static uint lastReplyId;
+    private static uint _lastReplyId;
 
-    private readonly uint replyId;
+    private readonly uint _replyId;
 
     private const uint DefaultSearchFlags = (uint)(
         RequestFlags.EVERYTHING_REQUEST_SIZE
@@ -25,7 +25,7 @@ public sealed class Everything : IEverything, IDisposable
     public Everything()
     {
         ResultKind = ResultKind.Both;
-        replyId = Interlocked.Increment(ref lastReplyId);
+        _replyId = Interlocked.Increment(ref _lastReplyId);
         if (!EverythingState.IsStarted())
         {
             throw new InvalidOperationException("Everything service must be started");
@@ -67,7 +67,7 @@ public sealed class Everything : IEverything, IDisposable
 
         using (Lock())
         {
-            Everything_SetReplyID(replyId);
+            Everything_SetReplyID(_replyId);
             Everything_SetMatchWholeWord(MatchWholeWord);
             Everything_SetMatchPath(MatchPath);
             Everything_SetMatchCase(MatchCase);
@@ -96,7 +96,7 @@ public sealed class Everything : IEverything, IDisposable
     private IEnumerable<ISearchResult> GetResults()
     {
         var numResults = Everything_GetNumResults();
-        return Enumerable.Range(0, (int)numResults).Select(x => new SearchResult(x, replyId));
+        return Enumerable.Range(0, (int)numResults).Select(x => new SearchResult((uint)x, _replyId));
     }
 
     private static ErrorCode GetError()

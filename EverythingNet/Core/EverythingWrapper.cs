@@ -1,20 +1,18 @@
 ﻿// ReSharper disable UnusedMember.Local
-namespace EverythingNet.Core;
 
-using System;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
+
+namespace EverythingNet.Core;
 
 internal static partial class EverythingWrapper
 {
     private static readonly ReaderWriterLockSlim SyncLock = new();
 
-    private class Locker : IDisposable
+    private class LockWrapper : IDisposable
     {
         private readonly ReaderWriterLockSlim _syncLock;
 
-        public Locker(ReaderWriterLockSlim syncLock)
+        public LockWrapper(ReaderWriterLockSlim syncLock)
         {
             _syncLock = syncLock;
             _syncLock.EnterWriteLock();
@@ -28,29 +26,21 @@ internal static partial class EverythingWrapper
 
     private const string EverythingDll = "Everything";
 
-    private const int EVERYTHING_OK = 0;
-    private const int EVERYTHING_ERROR_MEMORY = 1;
-    private const int EVERYTHING_ERROR_IPC = 2;
-    private const int EVERYTHING_ERROR_REGISTERCLASSEX = 3;
-    private const int EVERYTHING_ERROR_CREATEWINDOW = 4;
-    private const int EVERYTHING_ERROR_CREATETHREAD = 5;
-    private const int EVERYTHING_ERROR_INVALIDINDEX = 6;
-    private const int EVERYTHING_ERROR_INVALIDCALL = 7;
-
-    public enum FileInfoIndex
+    static EverythingWrapper()
     {
-        FileSize = 1,
-        FolderSize,
-        DateCreated,
-        DateModified,
-        DateAccessed,
-        Attributes
-    }
+        NativeLibrary.SetDllImportResolver(typeof(EverythingWrapper).Assembly, (libraryName, _, _) =>
+        {
+            if (libraryName != "Everything.dll") return IntPtr.Zero;
 
+            var arch = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "win-x64" : "win-x86";
+            var fullPath = Path.Combine(AppContext.BaseDirectory, "runtimes", arch, "native", "Everything.dll");
+            return File.Exists(fullPath) ? NativeLibrary.Load(fullPath) : IntPtr.Zero;
+        });
+    }
 
     internal static IDisposable Lock()
     {
-        return new Locker(SyncLock);
+        return new LockWrapper(SyncLock);
     }
 
     [LibraryImport(EverythingDll)]
@@ -101,8 +91,14 @@ internal static partial class EverythingWrapper
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool Everything_IsFileResult(uint nIndex);
 
-    [DllImport(EverythingDll, CharSet = CharSet.Unicode, EntryPoint = "Everything_GetResultFullPathNameW")]
-    public static extern void Everything_GetResultFullPathName(uint nIndex, StringBuilder lpString, uint nMaxCount);
+    [LibraryImport(EverythingDll, EntryPoint = "Everything_GetResultFullPathNameW")]
+    public static unsafe partial void Everything_GetResultFullPathName(uint nIndex, char* buffer, uint nMaxCount);
+
+    [LibraryImport(EverythingDll, StringMarshalling = StringMarshalling.Utf16, EntryPoint = "Everything_GetResultPathW")]
+    public static partial string Everything_GetResultPath(uint nIndex);
+
+    [LibraryImport(EverythingDll, StringMarshalling = StringMarshalling.Utf16, EntryPoint = "Everything_GetResultFileNameW")]
+    public static partial string Everything_GetResultFileName(uint nIndex);
 
     // Everything 1.4
     [LibraryImport(EverythingDll)]

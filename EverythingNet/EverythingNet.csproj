@@ -1,52 +1,60 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <Platforms>AnyCPU;x64;x86</Platforms>
-        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-        <Version>2.0.0</Version>
-        <PackageId>$(AssemblyName)Core</PackageId>
-        <Title>$(AssemblyName)Core</Title>
-        <Description>.NET library that wraps Everything Search excellent tool that allows to instantly search for files.</Description>
-        <PackageProjectUrl>https://github.com/2A5F/EverythingNetCore</PackageProjectUrl>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageIcon>site_logo.png</PackageIcon>
-        <RepositoryUrl>https://github.com/2A5F/EverythingNetCore</RepositoryUrl>
-        <PackageLicenseFile>LICENSE</PackageLicenseFile>
-        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    </PropertyGroup>
+  <PropertyGroup>
+    <Platforms>AnyCPU;x64;x86</Platforms>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Version>2.0.0</Version>
+    <PackageId>$(AssemblyName)Core</PackageId>
+    <Title>$(AssemblyName)Core</Title>
+    <Description>.NET library that wraps Everything Search excellent tool that allows to instantly search for files.</Description>
+    <PackageProjectUrl>https://github.com/2A5F/EverythingNetCore</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>site_logo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/2A5F/EverythingNetCore</RepositoryUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\Everything\x86\Everything.dll">
-            <Link>runtimes/win-x86/native/Everything.dll</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="..\Everything\x86\Everything.exe">
-            <Link>runtimes/win-x86/native/Everything.exe</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="..\Everything\x64\Everything.dll">
-            <Link>runtimes/win-x64/native/Everything.dll</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="..\Everything\x64\Everything.exe">
-            <Link>runtimes/win-x64/native/Everything.exe</Link>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-    
-    <ItemGroup>
-        <None Include="..\LICENSE">
-            <Pack>True</Pack>
-            <PackagePath>\</PackagePath>
-        </None>
-        <None Include="..\media\site_logo.png">
-            <Pack>True</Pack>
-            <PackagePath>\</PackagePath>
-        </None>
-        <None Include="..\README.md">
-            <Pack>True</Pack>
-            <PackagePath>\</PackagePath>
-        </None>
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Everything\x86\Everything.dll">
+      <Link>runtimes/win-x86/native/Everything.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>runtimes/win-x86/native/</PackagePath>
+    </None>
+    <None Include="..\Everything\x86\Everything.exe">
+      <Link>runtimes/win-x86/native/Everything.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>runtimes/win-x86/native/</PackagePath>
+    </None>
+    <None Include="..\Everything\x64\Everything.dll">
+      <Link>runtimes/win-x64/native/Everything.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>runtimes/win-x64/native/</PackagePath>
+    </None>
+    <None Include="..\Everything\x64\Everything.exe">
+      <Link>runtimes/win-x64/native/Everything.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>runtimes/win-x64/native/</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\media\site_logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>

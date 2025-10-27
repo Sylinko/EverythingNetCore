@@ -25,6 +25,4 @@ public interface ISearchResult
     DateTime Accessed { get; }
 
     DateTime Executed { get; }
-
-    Exception? LastException { get; }
 }

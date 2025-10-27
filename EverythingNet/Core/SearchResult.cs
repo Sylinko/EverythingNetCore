@@ -1,36 +1,31 @@
 using System.Diagnostics.CodeAnalysis;
+using EverythingNet.Interfaces;
 
 namespace EverythingNet.Core;
 
-using System;
-using System.IO;
-using System.Text;
-using Interfaces;
-
-internal class SearchResult(int index, uint replyId) : ISearchResult
+internal class SearchResult(uint index, uint replyId) : ISearchResult
 {
     private delegate bool MyDelegate(uint index, out long date);
 
-    private readonly uint index = Convert.ToUInt32(index);
+    private readonly uint _index = Convert.ToUInt32(index);
 
-    public long Index => index;
+    public long Index => _index;
 
-    public bool IsFile => EverythingWrapper.Everything_IsFileResult(index);
+    public bool IsFile => EverythingWrapper.Everything_IsFileResult(_index);
 
     [field: AllowNull, MaybeNull]
-    public string FullPath
+    public unsafe string FullPath
     {
         get
         {
-            if (field == null)
-            {
-                var builder = new StringBuilder(260);
+            if (field != null) return field;
 
-                EverythingWrapper.Everything_SetReplyID(replyId);
-                EverythingWrapper.Everything_GetResultFullPathName(index, builder, 260);
+            var buffer = stackalloc char[520];
 
-                field = builder.ToString();
-            }
+            EverythingWrapper.Everything_SetReplyID(replyId);
+            EverythingWrapper.Everything_GetResultFullPathName(_index, buffer, 520);
+
+            field = new string(buffer);
 
             return field;
         }
@@ -40,19 +35,8 @@ internal class SearchResult(int index, uint replyId) : ISearchResult
     {
         get
         {
-            //EverythingWrapper.Everything_SetReplyID(replyId);
-            //return EverythingWrapper.Everything_GetResultPath(index);
-
-            // Temporary implementation until the native function works as expected
-            try
-            {
-                return !string.IsNullOrEmpty(FullPath) ? System.IO.Path.GetDirectoryName(FullPath)! : string.Empty;
-            }
-            catch (Exception e)
-            {
-                LastException = e;
-                return FullPath;
-            }
+            EverythingWrapper.Everything_SetReplyID(replyId);
+            return EverythingWrapper.Everything_GetResultPath(index);
         }
     }
 
@@ -60,19 +44,8 @@ internal class SearchResult(int index, uint replyId) : ISearchResult
     {
         get
         {
-            //EverythingWrapper.Everything_SetReplyID(replyId);
-            //return EverythingWrapper.Everything_GetResultFileName(index);
-
-            // Temporary implementation until the native function works as expected
-            try
-            {
-                return !string.IsNullOrEmpty(FullPath) ? System.IO.Path.GetFileName(FullPath) : string.Empty;
-            }
-            catch (Exception e)
-            {
-                LastException = e;
-                return FullPath;
-            }
+            EverythingWrapper.Everything_SetReplyID(replyId);
+            return EverythingWrapper.Everything_GetResultFileName(index);
         }
     }
 
@@ -81,7 +54,7 @@ internal class SearchResult(int index, uint replyId) : ISearchResult
         get
         {
             EverythingWrapper.Everything_SetReplyID(replyId);
-            EverythingWrapper.Everything_GetResultSize(index, out var size);
+            EverythingWrapper.Everything_GetResultSize(_index, out var size);
 
             return size;
         }
@@ -92,7 +65,7 @@ internal class SearchResult(int index, uint replyId) : ISearchResult
         get
         {
             EverythingWrapper.Everything_SetReplyID(replyId);
-            var attributes = EverythingWrapper.Everything_GetResultAttributes(index);
+            var attributes = EverythingWrapper.Everything_GetResultAttributes(_index);
 
             return attributes > 0 ? attributes
                 : !string.IsNullOrEmpty(FullPath) ? (uint)File.GetAttributes(FullPath)
@@ -108,12 +81,10 @@ internal class SearchResult(int index, uint replyId) : ISearchResult
 
     public DateTime Executed => GenericDate(EverythingWrapper.Everything_GetResultDateRun, File.GetLastAccessTime);
 
-    public Exception? LastException { get; private set; }
-
     private DateTime GenericDate(MyDelegate func, Func<string, DateTime> fallbackDelegate)
     {
         EverythingWrapper.Everything_SetReplyID(replyId);
-        if (func(index, out var date) && date >= 0)
+        if (func(_index, out var date) && date >= 0)
         {
             return DateTime.FromFileTime(date);
         }
