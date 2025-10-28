@@ -24,7 +24,7 @@ internal static partial class EverythingWrapper
         }
     }
 
-    private const string EverythingDll = "Everything";
+    private const string EverythingDll = "Everything.dll";
 
     static EverythingWrapper()
     {
