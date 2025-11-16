@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Platforms>AnyCPU;x64;x86</Platforms>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Version>2.0.0</Version>
     <PackageId>$(AssemblyName)Core</PackageId>
@@ -16,25 +15,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\Everything\x86\Everything.dll">
+    <None Include="..\Everything\x86\Everything.dll" Condition="'$(RuntimeIdentifier)' != 'win-x64'">
       <Link>runtimes/win-x86/native/Everything.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>true</Pack>
       <PackagePath>runtimes/win-x86/native/</PackagePath>
     </None>
-    <None Include="..\Everything\x86\Everything.exe">
+    <None Include="..\Everything\x86\Everything.exe" Condition="'$(RuntimeIdentifier)' != 'win-x64'">
       <Link>runtimes/win-x86/native/Everything.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>true</Pack>
       <PackagePath>runtimes/win-x86/native/</PackagePath>
     </None>
-    <None Include="..\Everything\x64\Everything.dll">
+    <None Include="..\Everything\x64\Everything.dll" Condition="'$(RuntimeIdentifier)' != 'win-x86'">
       <Link>runtimes/win-x64/native/Everything.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>true</Pack>
       <PackagePath>runtimes/win-x64/native/</PackagePath>
     </None>
-    <None Include="..\Everything\x64\Everything.exe">
+    <None Include="..\Everything\x64\Everything.exe" Condition="'$(RuntimeIdentifier)' != 'win-x86'">
       <Link>runtimes/win-x64/native/Everything.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>true</Pack>
