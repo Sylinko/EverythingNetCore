@@ -24,21 +24,20 @@ public static class EverythingState
 
     public static void StartService(bool admin, StartMode mode)
     {
-        if (!IsStarted())
+        if (IsStarted()) return;
+        
+        var option = admin ? "-admin" : string.Empty;
+        switch (mode)
         {
-            var option = admin ? "-admin" : string.Empty;
-            switch (mode)
-            {
-                case StartMode.Install:
-                    option += " -install-service";
-                    break;
-                case StartMode.Service:
-                    option += " -startup";
-                    break;
-            }
-            StartProcess(option);
-            IsStarted();
+            case StartMode.Install:
+                option += " -install-service";
+                break;
+            case StartMode.Service:
+                option += " -startup";
+                break;
         }
+        StartProcess(option);
+        IsStarted();
     }
 
     public static bool IsReady()
@@ -54,6 +53,27 @@ public static class EverythingState
         var revision = EverythingWrapper.Everything_GetRevision();
 
         return new Version(Convert.ToInt32(major), Convert.ToInt32(minor), Convert.ToInt32(build), Convert.ToInt32(revision));
+    }
+
+    public static void Exit()
+    {
+        if (!EverythingWrapper.Everything_Exit())
+        {
+            // If Everything_Exit fails, we can try to kill the process directly.
+            try
+            {
+                if (Process is { HasExited: false } process)
+                {
+                    process.Kill();
+                }
+            }
+            catch (Exception)
+            {
+                // ignore
+            }
+        }
+
+        Process = null;
     }
 
     public static ErrorCode GetLastError()

@@ -45,6 +45,10 @@ internal static partial class EverythingWrapper
 
     [LibraryImport(EverythingDll)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool Everything_Exit();
+
+    [LibraryImport(EverythingDll)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool Everything_IsDBLoaded();
 
     [LibraryImport(EverythingDll)]
