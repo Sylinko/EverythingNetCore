@@ -3,7 +3,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using Interfaces;
 
 public static class EverythingState
@@ -83,9 +82,12 @@ public static class EverythingState
 
     private static void StartProcess(string options)
     {
-        var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-        var exePath = Path.GetFullPath(
-            Path.Combine(path, "runtimes", Environment.Is64BitProcess ? "win-x64" : "win-x86", "native", "Everything.exe"));
+        // RID-specific publish flattens native assets; RID-less builds retain runtime directories.
+        var exePath = Path.Combine(AppContext.BaseDirectory, "Everything.exe");
+        if (!File.Exists(exePath))
+        {
+            exePath = Path.Combine(AppContext.BaseDirectory, "runtimes", Environment.Is64BitProcess ? "win-x64" : "win-x86", "native", "Everything.exe");
+        }
 
         if (!File.Exists(exePath))
         {

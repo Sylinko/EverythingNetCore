@@ -1,0 +1,77 @@
+name: Release Sylinko NuGet Packages
+
+on:
+  push:
+    tags: ['publish-*']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Everything.dll and Everything.exe are stored in Git LFS.
+          lfs: true
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Resolve package version
+        id: version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
+          $run = Invoke-RestMethod "$env:GITHUB_API_URL/repos/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID" -Headers $headers
+          $version = ./scripts/get-package-version.ps1 -RunCreatedAt $run.created_at -RunNumber $env:GITHUB_RUN_NUMBER
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "NuGet package version: **$version** (original run creation date in UTC)." >> $env:GITHUB_STEP_SUMMARY
+      - name: Pack packages
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $version = $env:PACKAGE_VERSION
+          dotnet pack EverythingNet/EverythingNet.csproj -c Release "-p:PackageVersion=$version"
+          if ($LASTEXITCODE) { throw 'Package creation failed.' }
+      - name: Verify RID-less and RID-specific package consumption
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          dotnet restore tests/PackageSmoke/PackageSmoke.csproj --configfile tests/PackageSmoke/nuget.config "-p:PackageVersion=$version"
+          if ($LASTEXITCODE) { throw 'Package smoke restore failed.' }
+          dotnet run --project tests/PackageSmoke/PackageSmoke.csproj -c Release --no-restore "-p:PackageVersion=$version"
+          if ($LASTEXITCODE) { throw 'RID-less package smoke failed.' }
+          dotnet publish tests/PackageSmoke/PackageSmoke.csproj -c Release -r win-x64 --self-contained false -o artifacts/smoke --configfile tests/PackageSmoke/nuget.config "-p:PackageVersion=$version"
+          if ($LASTEXITCODE) { throw 'RID-specific package smoke publish failed.' }
+          dotnet artifacts/smoke/PackageSmoke.dll
+          if ($LASTEXITCODE) { throw 'RID-specific package smoke failed.' }
+      - name: Prevent overwriting published package assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: nuget/EverythingNetCore/${{ steps.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
+          $tag = [Uri]::EscapeDataString($env:RELEASE_TAG)
+          $release = $null
+          try {
+            $release = Invoke-RestMethod "$env:GITHUB_API_URL/repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" -Headers $headers
+          }
+          catch {
+            if ([int]$_.Exception.Response.StatusCode -ne 404) { throw }
+          }
+          if ($release.assets.Count -gt 0) { throw 'This release already contains package assets. Start a new workflow run to publish a new version; never overwrite an existing package version.' }
+      - name: Release to Sylinko NuGet feed
+        uses: Sylinko/nuget-feed@v1
+        with:
+          token: ${{ secrets.SYLINKO_NUGET_FEED_TOKEN }}
+          release-tag: nuget/EverythingNetCore/${{ steps.version.outputs.version }}
+          artifacts-directory: artifacts/packages

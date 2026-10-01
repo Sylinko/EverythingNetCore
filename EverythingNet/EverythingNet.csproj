@@ -1,15 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Version>2.0.0</Version>
-    <PackageId>$(AssemblyName)Core</PackageId>
+    <PackageVersion Condition="'$(PackageVersion)' == ''">999.0.0</PackageVersion>
+    <!-- Package release numbers must not change assembly identity or file version. -->
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+    <PackageId>EverythingNetCore</PackageId>
     <Title>$(AssemblyName)Core</Title>
     <Description>.NET library that wraps Everything Search excellent tool that allows to instantly search for files.</Description>
     <PackageProjectUrl>https://github.com/2A5F/EverythingNetCore</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>site_logo.png</PackageIcon>
-    <RepositoryUrl>https://github.com/2A5F/EverythingNetCore</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Sylinko/EverythingNetCore</RepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
