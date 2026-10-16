@@ -1,4 +1,4 @@
-﻿namespace EverythingNet.Core;
+namespace EverythingNet.Core;
 
 using System;
 using System.Diagnostics;
@@ -86,7 +86,7 @@ public static class EverythingState
         var exePath = Path.Combine(AppContext.BaseDirectory, "Everything.exe");
         if (!File.Exists(exePath))
         {
-            exePath = Path.Combine(AppContext.BaseDirectory, "runtimes", Environment.Is64BitProcess ? "win-x64" : "win-x86", "native", "Everything.exe");
+            exePath = Path.Combine(AppContext.BaseDirectory, "runtimes", "win-x64", "native", "Everything.exe");
         }
 
         if (!File.Exists(exePath))

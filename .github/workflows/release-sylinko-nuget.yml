@@ -50,7 +50,7 @@ jobs:
           if ($LASTEXITCODE) { throw 'RID-less package smoke failed.' }
           dotnet publish tests/PackageSmoke/PackageSmoke.csproj -c Release -r win-x64 --self-contained false -o artifacts/smoke --configfile tests/PackageSmoke/nuget.config "-p:PackageVersion=$version"
           if ($LASTEXITCODE) { throw 'RID-specific package smoke publish failed.' }
-          dotnet artifacts/smoke/PackageSmoke.dll
+          dotnet artifacts/smoke/PackageSmoke.dll --exercise-client
           if ($LASTEXITCODE) { throw 'RID-specific package smoke failed.' }
       - name: Prevent overwriting published package assets
         shell: pwsh

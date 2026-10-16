@@ -1,6 +1,7 @@
-﻿// ReSharper disable UnusedMember.Local
+// ReSharper disable UnusedMember.Local
 
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 
 namespace EverythingNet.Core;
 
@@ -28,15 +29,29 @@ internal static partial class EverythingWrapper
 
     static EverythingWrapper()
     {
-        NativeLibrary.SetDllImportResolver(typeof(EverythingWrapper).Assembly, (libraryName, _, _) =>
+        NativeLibrary.SetDllImportResolver(typeof(EverythingWrapper).Assembly, (libraryName, assembly, _) =>
         {
-            if (libraryName != "Everything.dll") return IntPtr.Zero;
+            if (AssemblyLoadContext.GetLoadContext(assembly)?.IsCollectible == true) return IntPtr.Zero;
+            if (libraryName is not ("Everything.dll" or "Everything3_x64.dll")) return IntPtr.Zero;
 
-            var arch = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "win-x64" : "win-x86";
-            var fullPath = Path.Combine(AppContext.BaseDirectory, "runtimes", arch, "native", "Everything.dll");
+            var fullPath = Path.Combine(AppContext.BaseDirectory, "runtimes", "win-x64", "native", libraryName);
             return File.Exists(fullPath) ? NativeLibrary.Load(fullPath) : IntPtr.Zero;
         });
     }
+
+    /// <summary>
+    /// Initializes the shared assembly resolver before either native SDK is used.
+    /// </summary>
+    internal static void EnsureInitialized() { }
+
+    [LibraryImport(EverythingDll)]
+    internal static partial void Everything_SetMax(uint count);
+
+    [LibraryImport(EverythingDll)]
+    internal static partial uint Everything_GetTotResults();
+
+    [LibraryImport(EverythingDll)]
+    internal static partial void Everything_CleanUp();
 
     internal static IDisposable Lock()
     {
@@ -96,7 +111,7 @@ internal static partial class EverythingWrapper
     public static partial bool Everything_IsFileResult(uint nIndex);
 
     [LibraryImport(EverythingDll, EntryPoint = "Everything_GetResultFullPathNameW")]
-    public static unsafe partial void Everything_GetResultFullPathName(uint nIndex, char* buffer, uint nMaxCount);
+    public static unsafe partial uint Everything_GetResultFullPathName(uint nIndex, char* buffer, uint nMaxCount);
 
     [LibraryImport(EverythingDll, StringMarshalling = StringMarshalling.Utf16, EntryPoint = "Everything_GetResultPathW")]
     public static partial string Everything_GetResultPath(uint nIndex);

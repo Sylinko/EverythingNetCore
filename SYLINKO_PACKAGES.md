@@ -21,15 +21,18 @@ Configure `SYLINKO_NUGET_FEED_TOKEN` as in Sylinko/Microsoft.ML and register
 EverythingNetCore in Sylinko/nuget-feed before the first run. The publishing
 action creates a GitHub Release and a feed PR; merge that PR to expose the version.
 
-The package includes both x86 and x64 Everything.dll/Everything.exe. Consumer
+The package includes only Windows x64 Everything.dll, Everything3_x64.dll and Everything.exe. Consumer
 smoke tests exercise RID-less builds and win-x64 publishes, verify the required
-assets, and call the native API without starting or installing an Everything
-service. The EXE lookup handles both NuGet output layouts.
+assets, and invoke both native SDKs. The win-x64 publish check additionally starts
+the bundled EXE as a hidden, isolated named instance that indexes only test files.
+It verifies bounded queries, Unicode paths, copied results, independent client disposal,
+SDK 3 cancellation and server disconnection. It never installs a service or alters a
+user installation. The EXE lookup handles both NuGet output layouts.
 The smoke project references the exact locally packed version and uses a private
-package cache. It does not install or start an Everything service.
+package cache. It does not install or start an Everything service. Pass `--exercise-client` to run the isolated client checks locally.
 
 Local pack: `dotnet pack EverythingNet/EverythingNet.csproj -c Release`.
 To validate a release-shaped version locally, pass `-p:PackageVersion=999.20261001.42`
 and use that same value for the package smoke tests.
-Always pack without a RID so both native architectures are included. Never
+Pack without a RID for the standard managed package layout. Never
 replace an existing ID/version with different contents.
